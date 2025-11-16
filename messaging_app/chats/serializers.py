@@ -1,18 +1,15 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from .models import Conversation, Message
-
-User = get_user_model()
+from .models import User, Conversation, Message
 
 
-# -----------------------------
-# User Serializer
-# -----------------------------
+# --------------------------------------
+# USER SERIALIZER
+# --------------------------------------
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id",
+            "user_id",
             "first_name",
             "last_name",
             "email",
@@ -21,35 +18,34 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
-# -----------------------------
-# Message Serializer
-# -----------------------------
+# --------------------------------------
+# MESSAGE SERIALIZER
+# --------------------------------------
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
+    sender_id = UserSerializer(read_only=True)
 
     class Meta:
         model = Message
         fields = [
-            "id",
-            "sender",
+            "message_id",
+            "sender_id",
             "message_body",
             "sent_at",
         ]
 
 
-# -----------------------------
-# Conversation Serializer
-# includes nested: participants, messages
-# -----------------------------
+# --------------------------------------
+# CONVERSATION SERIALIZER
+# --------------------------------------
 class ConversationSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
+    participants_id = UserSerializer(many=True, read_only=True)
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Conversation
         fields = [
-            "id",
-            "participants",
+            "conversation_id",
+            "participants_id",
             "messages",
             "created_at",
         ]

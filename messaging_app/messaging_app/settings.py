@@ -43,7 +43,6 @@ INSTALLED_APPS = [
 
     # Local Apps
     'chats',
-    'accounts',
 
 ]
 
@@ -56,10 +55,6 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
     ],
 }
-
-
-AUTH_USER_MODEL = "accounts.User"
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

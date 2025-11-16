@@ -1,57 +1,40 @@
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.contrib.auth import get_user_model
 
-from .models import Conversation, Message
+from .models import User, Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
-User = get_user_model()
-
 
 # ---------------------------------------------------------
-# Conversation ViewSet
+# CONVERSATION VIEWSET
 # ---------------------------------------------------------
 class ConversationViewSet(viewsets.ModelViewSet):
-    """
-    Handles:
-    - Listing conversations
-    - Creating conversations with participants
-    - Retrieving a conversation with nested messages
-    """
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
 
     def create(self, request, *args, **kwargs):
         """
-        Create a new conversation.
+        Create a new conversation with provided participants.
         Expected payload:
-            {
-                "participants": ["uuid1", "uuid2", ...]
-            }
+        {
+            "participants_id": ["uuid1", "uuid2"]
+        }
         """
-        participant_ids = request.data.get("participants", [])
+        participant_ids = request.data.get("participants_id", [])
 
         if not participant_ids:
-            return Response(
-                {"error": "At least one participant is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "participants_id is required"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        participants = User.objects.filter(id__in=participant_ids)
+        participants = User.objects.filter(user_id__in=participant_ids)
 
-        if not participants.exists():
-            return Response(
-                {"error": "Invalid participant IDs"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if not participants:
+            return Response({"error": "Invalid participant IDs"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         conversation = Conversation.objects.create()
-        conversation.participants.set(participants)
-        conversation.save()
+        conversation.participants_id.set(participants)
 
         serializer = ConversationSerializer(conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -60,39 +43,39 @@ class ConversationViewSet(viewsets.ModelViewSet):
     def add_message(self, request, pk=None):
         """
         Custom endpoint: POST /conversations/<id>/add_message/
-        Payload:
         {
-            "message_body": "Hello there"
+            "sender_id": "<uuid>",
+            "message_body": "Hello!"
         }
         """
         conversation = self.get_object()
+
+        sender_id = request.data.get("sender_id")
         message_body = request.data.get("message_body")
 
-        if not message_body:
-            return Response(
-                {"error": "message_body is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if not sender_id or not message_body:
+            return Response({"error": "sender_id and message_body required"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            sender = User.objects.get(user_id=sender_id)
+        except User.DoesNotExist:
+            return Response({"error": "Sender not found"},
+                            status=status.HTTP_404_NOT_FOUND)
 
         message = Message.objects.create(
             conversation=conversation,
-            sender=request.user,
+            sender_id=sender,
             message_body=message_body,
         )
 
-        serializer = MessageSerializer(message)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
 
 # ---------------------------------------------------------
-# Message ViewSet
+# MESSAGE VIEWSET
 # ---------------------------------------------------------
 class MessageViewSet(viewsets.ModelViewSet):
-    """
-    Handles:
-    - Listing all messages
-    - Creating a message inside an existing conversation
-    """
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
 
@@ -100,33 +83,36 @@ class MessageViewSet(viewsets.ModelViewSet):
         """
         Create a message.
         Expected payload:
-            {
-                "conversation": "<conversation_uuid>",
-                "message_body": "Hello!"
-            }
+        {
+            "conversation": "<uuid>",
+            "sender_id": "<uuid>",
+            "message_body": "Hello!"
+        }
         """
         conversation_id = request.data.get("conversation")
+        sender_id = request.data.get("sender_id")
         message_body = request.data.get("message_body")
 
-        if not conversation_id or not message_body:
-            return Response(
-                {"error": "conversation and message_body are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if not conversation_id or not sender_id or not message_body:
+            return Response({"error": "conversation, sender_id, message_body required"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            conversation = Conversation.objects.get(id=conversation_id)
+            conversation = Conversation.objects.get(conversation_id=conversation_id)
         except Conversation.DoesNotExist:
-            return Response(
-                {"error": "Conversation not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return Response({"error": "Conversation not found"},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            sender = User.objects.get(user_id=sender_id)
+        except User.DoesNotExist:
+            return Response({"error": "Sender not found"},
+                            status=status.HTTP_404_NOT_FOUND)
 
         message = Message.objects.create(
             conversation=conversation,
-            sender=request.user,
-            message_body=message_body,
+            sender_id=sender,
+            message_body=message_body
         )
 
-        serializer = MessageSerializer(message)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
