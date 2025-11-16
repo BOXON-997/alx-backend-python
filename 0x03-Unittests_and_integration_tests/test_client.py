@@ -3,9 +3,11 @@
 
 import unittest
 from unittest.mock import patch
-from parameterized import parameterized
-
+from parameterized import parameterized, parameterized_class
+from unittest.mock import patch, Mock
 from client import GithubOrgClient
+
+from fixtures import org_payload, repos_payload, expected_repos, apache2_repos
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -75,6 +77,49 @@ class TestGithubOrgClient(unittest.TestCase):
         client = GithubOrgClient("google")
         result = client.has_license(repo, license_key)
         self.assertEqual(result, expected)
+
+@parameterized_class([
+    {
+        "org_payload": org_payload,
+        "repos_payload": repos_payload,
+        "expected_repos": expected_repos,
+        "apache2_repos": apache2_repos,
+    }
+])
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """Integration tests for GithubOrgClient.public_repos"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Start patcher for requests.get with custom side effects"""
+
+        def side_effect(url):
+            if url.endswith("google"):
+                return Mock(json=lambda: cls.org_payload)
+            if url.endswith("repos"):
+                return Mock(json=lambda: cls.repos_payload)
+            return Mock(json=lambda: None)
+
+        cls.get_patcher = patch("requests.get", side_effect=side_effect)
+        cls.mock_get = cls.get_patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        """Stop patcher for requests.get"""
+        cls.get_patcher.stop()
+
+    def test_public_repos(self):
+        """Test public_repos returns expected list"""
+        client = GithubOrgClient("google")
+        self.assertEqual(client.public_repos(), self.expected_repos)
+
+    def test_public_repos_with_license(self):
+        """Test public_repos returns only repos with APACHE2 license"""
+        client = GithubOrgClient("google")
+        self.assertEqual(
+            client.public_repos(license="apache-2.0"),
+            self.apache2_repos
+        )
 
 
 if __name__ == "__main__":
