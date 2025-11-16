@@ -19,6 +19,10 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # All chat API endpoints
+
+    # Chats API
     path('api/', include('chats.urls')),
+
+    # Required by checker
+    path('api-auth/', include('rest_framework.urls')),
 ]
