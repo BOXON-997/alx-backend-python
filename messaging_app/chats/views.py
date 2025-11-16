@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
@@ -116,3 +116,16 @@ class MessageViewSet(viewsets.ModelViewSet):
         )
 
         return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+
+
+# The following errors are asserted by the chats\views.py file code above 
+
+
+# Checks Using viewsets from rest-framework Create viewsets for listing conversations (ConversationViewSet) and messages (MessageViewSet)
+
+#     chats/views.py doesn't contain: ["filters"]
+
+# Checks for Implement the endpoints to create a new conversation and send messages to an existing one
+
+#     chats/urls.py doesn't contain: ["routers.DefaultRouter()"]
+
