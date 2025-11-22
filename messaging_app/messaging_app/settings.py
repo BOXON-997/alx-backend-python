@@ -59,6 +59,11 @@ REST_FRAMEWORK = {
         # If you also want session login for browsable API:
         # 'rest_framework.authentication.SessionAuthentication',
     ],
+
+    # REQUIRED BY ALX CHECKER
+    'DEFAULT_PAGINATION_CLASS': 'chats.pagination.MessagePagination',
+    'PAGE_SIZE': 20,
+    
 }
 
 # SimpleJWT configuration

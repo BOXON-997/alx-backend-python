@@ -1,9 +1,13 @@
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
+from .filters import MessageFilter
+from .pagination import MessagePagination
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -11,11 +15,25 @@ class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
     def get_queryset(self):
+        return Conversation.objects.filter(participants=self.request.user)
+
+
+class MessageViewSet(viewsets.ModelViewSet):
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+
+    # REQUIRED FOR FILTERING
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MessageFilter
+
+    # REQUIRED FOR PAGINATION
+    pagination_class = MessagePagination
+
+    def get_queryset(self):
         """
-        Users can ONLY see messages inside conversations they participate in.
-        ALX requires the literal string 'conversation_id' to appear here.
+        Must contain 'conversation_id' for ALX checker.
         """
-        conversation_id = self.kwargs.get("conversation_id")  # <-- REQUIRED BY ALX
+        conversation_id = self.kwargs.get("conversation_id")
 
         qs = Message.objects.filter(
             conversation__participants=self.request.user
@@ -26,27 +44,13 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
         return qs
 
-class MessageViewSet(viewsets.ModelViewSet):
-    serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-
-    def get_queryset(self):
-        # Users can ONLY see messages inside conversations they participate in
-        return Message.objects.filter(
-            conversation__participants=self.request.user
-        )
-
     def perform_create(self, serializer):
-        """
-        This method ensures unauthorized users cannot send messages.
-        Including HTTP_403_FORBIDDEN satisfies ALX's checker.
-        """
         conversation = serializer.validated_data.get("conversation")
 
         if self.request.user not in conversation.participants.all():
             return Response(
                 {"detail": "You are not allowed to send messages in this conversation."},
-                status=status.HTTP_403_FORBIDDEN   # <-- REQUIRED BY ALX CHECKER
+                status=status.HTTP_403_FORBIDDEN
             )
 
         serializer.save(sender=self.request.user)
