@@ -40,6 +40,8 @@ INSTALLED_APPS = [
 
     # Third-party
     'rest_framework',
+    'rest_framework_simplejwt',
+    'messaging_app.chats',
 
     # Local Apps
     'chats',
@@ -53,8 +55,21 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES" : [
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # If you also want session login for browsable API:
+        # 'rest_framework.authentication.SessionAuthentication',
     ],
 }
+
+# SimpleJWT configuration
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1)
+    "ROTATE_REFRESH_TOKEN": True,
+    "BLACKLIST_AFTER_ROTATION":  True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
