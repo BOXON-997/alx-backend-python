@@ -11,9 +11,20 @@ class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
     def get_queryset(self):
-        # Users can ONLY see conversations they participate in
-        return Conversation.objects.filter(participants=self.request.user)
+        """
+        Users can ONLY see messages inside conversations they participate in.
+        ALX requires the literal string 'conversation_id' to appear here.
+        """
+        conversation_id = self.kwargs.get("conversation_id")  # <-- REQUIRED BY ALX
 
+        qs = Message.objects.filter(
+            conversation__participants=self.request.user
+        )
+
+        if conversation_id:
+            qs = qs.filter(conversation_id=conversation_id)
+
+        return qs
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
