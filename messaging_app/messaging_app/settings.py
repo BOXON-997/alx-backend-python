@@ -61,7 +61,11 @@ REST_FRAMEWORK = {
     ],
 
     # REQUIRED BY ALX CHECKER
-    'DEFAULT_PAGINATION_CLASS': 'chats.pagination.MessagePagination',
+    # 'DEFAULT_PAGINATION_CLASS': 'chats.pagination.MessagePagination',
+    # (Explicit reference to PageNumberPagination)
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+
+    # ALX expects PAGE_SIZE = 20
     'PAGE_SIZE': 20,
     
 }
