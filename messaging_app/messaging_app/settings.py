@@ -48,6 +48,14 @@ INSTALLED_APPS = [
 
 ]
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES" : [
         "rest_framework.permissions.IsAuthenticated",
