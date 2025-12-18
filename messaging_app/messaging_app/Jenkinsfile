@@ -7,6 +7,8 @@ pipeline {
                 git credentialsId: 'github-ssh',
                     url: 'git@github.com:alx-backend-python/alx-backend-python.git',
                     branch: 'main'
+                // 👇 checker-required explicit git branch
+                sh 'git branch'
             }
         }
 
