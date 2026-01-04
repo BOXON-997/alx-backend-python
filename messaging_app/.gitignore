@@ -1,0 +1,22 @@
+pass=This is the day the lord has made 22
+# Ignore other ALX projects
+Django-Middleware-0x03/
+Django-signals_orm-0x04/
+0x03-Unittests_and_integration_tests/
+python-context-async-perations-0x02/
+python-decorators-0x01/
+python-generators-0x00/
+
+# Ignore virtual environments
+myProjVenv/
+venv/
+.env/
+
+# Ignore databases
+db.sqlite3
+
+# Ignore OS / editor noise
+__pycache__/
+*.pyc
+*.swp
+.DS_Store
