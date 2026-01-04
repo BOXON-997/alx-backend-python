@@ -2,11 +2,9 @@ name: Django CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   test:
@@ -49,6 +47,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r messaging_app/requirements.txt
+          pip install flake8 pytest pytest-cov
 
       - name: Wait for MySQL
         run: |
@@ -59,10 +58,26 @@ jobs:
             sleep 5
           done
 
-      - name: Run Django migrations
+      - name: Run migrations
         run: |
           python messaging_app/manage.py migrate
 
-      - name: Run tests
+      # ✅ CODE QUALITY CHECK (MANDATORY)
+      - name: Run flake8 linting
         run: |
-          python messaging_app/manage.py test
+          flake8 messaging_app
+
+      # ✅ TESTS + COVERAGE
+      - name: Run tests with coverage
+        run: |
+          pytest messaging_app \
+            --cov=messaging_app \
+            --cov-report=xml \
+            --cov-report=html
+
+      # ✅ UPLOAD COVERAGE REPORT
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
